@@ -5,11 +5,10 @@ A simple scene graph class and functionality
 """
 
 from OpenGL.GL import *
-import OpenGL.GL.shaders
 import numpy as np
 
-import transformations as tr
-import easy_shaders as es
+from Snake import transformations as tr
+from Snake import easy_shaders as es
 
 
 # A simple class to handle a scene graph
