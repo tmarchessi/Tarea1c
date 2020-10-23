@@ -1,57 +1,67 @@
-import glfw
-from OpenGL.GL import *
-import sys
+from Snake import transformations as tr
+from Snake import  basic_shapes as bs
+from Snake import  scene_graph as sg
+from Snake import  easy_shaders as es
+import numpy as np
 
-from Snake import easy_shaders as es
-from  Snake import  Forms
+class Map:
+    N = input("Valor de N")
+    N = int(N)
 
-if __name__ == "__main__":
+class Limit:
+    N = Map.N
 
-    # Initialize glfw
-    if not glfw.init():
-        sys.exit()
+    def __init__(self):
+        gpu_limit_quad = es.toGPUShape(bs.createColorQuad(0, 0, 0))  # negro
 
-    width = 800
-    height = 800
+        # Creamos el limite
 
-    window = glfw.create_window(width, height, "Snake", None, None)
+        limit = sg.SceneGraphNode('grasp')
+        limit.transform = tr.scale(1/self.N, 1/self.N, 1)
+        limit.childs += [gpu_limit_quad]
 
-    if not window:
-        sys.exit()
+        limit_tr = sg.SceneGraphNode("limitTR")
+        limit_tr.childs += [limit]
 
-    glfw.make_context_current(window)
+        self.model = limit_tr
 
-    # Conecting the callback function 'on_key' to handle keyboard events
-    # glfw.set_key_callback(window, controller.on_key)
+    def draw(self, pipeline):
+        for px in np.arange(-1, 1 + 1/self.N, 1/self.N):
+            for py in (-1, 1):
+                self.model.transform = tr.translate(px, py, 0)
+                sg.drawSceneGraphNode(self.model, pipeline, "transform")
 
-    # Assembling the shader program(pipeline) with both shaders
-    pipeline = es.SimpleTransformShaderProgram()
+        for py in np.arange(-1, 1 , 1/self.N):
+            for px in (-1, 1):
+                self.model.transform = tr.translate(px, py, 0)
+                sg.drawSceneGraphNode(self.model, pipeline, "transform")
 
-    # Telling Opengl to use our shader program
-    glUseProgram(pipeline.shaderProgram)
+class Grasp:
+    N = Map.N
 
-    # setting up the clear screen color
-    glClearColor(0.85, 0.85, 0.85, 1.0)
+    def __init__(self):
+        gpu_grasp_quad = es.toGPUShape(bs.createColorQuad(0, 1, 0))  # verde
 
-    # Our shapes here are always full painted
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
+        # Creamos el pasto
 
-    ekans = Forms.Ekans()
-    apple = Forms.Apple()
+        grasp = sg.SceneGraphNode('grasp')
+        grasp.transform = tr.scale(1 / self.N, 1 / self.N, 1)
+        grasp.childs += [gpu_grasp_quad]
 
-    while not glfw.window_should_close(window):
+        grasp_tr = sg.SceneGraphNode("graspTR")
+        grasp_tr.childs += [grasp]
 
-        # Using GLFW to check for inputs events
-        glfw.poll_events()
+        self.model = grasp_tr
 
-        # Clearing  the screen in both, color and depth
-        glClear(GL_COLOR_BUFFER_BIT)
+        # Creamos el pasto
 
-        # Dibujamos la serpiente
-        ekans.draw(pipeline)
-        apple.draw(pipeline)
+    def draw(self, pipeline):
+        for px in np.arange(-1 + 1 / self.N, 1 - 1 / self.N, 1 / self.N):
+            for py in (-1, 1):
+                self.model.transform = tr.translate(px, py, 0)
+                sg.drawSceneGraphNode(self.model, pipeline, "transform")
 
-        # Once the render is done, buffers are swapped showing only the complete one
-        glfw.swap_buffers(window)
-
-    glfw.terminate()
+        for py in np.arange(-1 + 1 / self.N, 1 - 1 / self.N, 1 / self.N):
+            for px in (-1, 1):
+                self.model.transform = tr.translate(px, py, 0)
+                sg.drawSceneGraphNode(self.model, pipeline, "transform")
