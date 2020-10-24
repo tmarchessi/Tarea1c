@@ -43,6 +43,7 @@ if __name__ == "__main__":
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
 
     ekans = Formas.Ekans()
+    tale = Formas.Tale()
     apple = Formas.Apple()
     limit = Map.Limit()
 
@@ -57,6 +58,7 @@ if __name__ == "__main__":
         ti = glfw.get_time()
         N = Map.Map.N
         x = ekans.x
+        k = ekans.k
 
         # Using GLFW to check for inputs events
         glfw.poll_events()
@@ -65,27 +67,37 @@ if __name__ == "__main__":
         glClear(GL_COLOR_BUFFER_BIT)
         if ti > f:
             ekans.update(ti)
+            k = 1
             f += 0.1
-            print ('f')
-            print(apple.pos_x, 'm')
-            print(apple.pos_y, 'm')
-            print(ekans.posicion_x)
-            print(ekans.posicion_y)
-
         ekans.loose()
-        ekans.eat(pos_x, pos_y)
-        print(x, 'xxx')
+        if k == 1:
+            ekans.eat(pos_x, pos_y)
         if x == 1:
             pos_x = random.choice(np.arange(-1 + 1/N, 1 - 1/N, 1/N))
             pos_y = random.choice(np.arange(-1 + 1/N, 1 - 1/N, 1/N))
-            print(pos_x, 'x')
-            print(pos_y, 'y')
+            if (pos_x == ekans.posicion_x or pos_x == tale.p_x):
+                if(pos_y == ekans.posicion_y or pos_y == tale.p_y):
+                    pos_x = random.choice(np.arange(-1 + 1 / N, 1 - 1 / N, 1 / N))
+                    pos_y = random.choice(np.arange(-1 + 1 / N, 1 - 1 / N, 1 / N))
+        if ekans.taleList.__len__() == 1:
+            ekans.draw_tale(pipeline)
+
+        else:
+            for j in ekans.taleList:
+                if ekans.direc == tale.tale_direc:
+                    ekans.draw_tale(pipeline)
+
+                else:
+                    p = ekans.direc
+                    ekans.direc = tale.tale_direc
+                    ekans.draw_tale(pipeline)
+                    ekans.direc = p
+                    tale.tale_direc = p
 
         # Dibujamos
         apple.draw(pipeline, pos_x, pos_y)
         ekans.draw(pipeline)
         limit.draw(pipeline)
-        print(x, 'x')
 
         # Once the render is done, buffers are swapped showing only the complete one
         glfw.swap_buffers(window)

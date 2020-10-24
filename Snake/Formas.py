@@ -6,18 +6,42 @@ from Snake import Map
 import numpy as np
 from typing import List
 
-class Ekans(object):
+class Tale(object):
     N = Map.Map.N
 
     def __init__(self):
-        extend: List['Ekans']
-        self.x = 0
+        gpu_tale_quad = es.toGPUShape(bs.createColorQuad(1, 1, 0))  # celeste
 
-        self.body = []
+        # Creamos la cola
+        tale = sg.SceneGraphNode('tale')
+        tale.transform = tr.scale(1 / self.N, 1 / self.N, 1)
+        tale.childs += [gpu_tale_quad]
+
+        tale_tr = sg.SceneGraphNode("taleTR")
+        tale_tr.childs += [tale]
+
+        self.p_x = 0
+        self.p_y = 0
+        self.model = tale_tr
+
+    def draw(self, pipeline,x ,y):
+        self.model.transform = tr.translate(x, y, 0)
+        sg.drawSceneGraphNode(self.model, pipeline, "transform")
+
+    def tale_direc(self):
+        self.tale_direc = 1
+
+class Ekans(object):
+    N = Map.Map.N
+    taleList: List['Tale']
+
+    def __init__(self):
+        self.x = 0
+        self.k = 1
+        self.taleList = []
         # Figuras basicas
 
         gpu_head_quad = es.toGPUShape(bs.createColorQuad(1, 0, 1))  # morado
-        gpu_body_quad = es.toGPUShape(bs.createColorQuad(1, 0, 1))  # amarillo
 
         # Creamos la cabeza
 
@@ -25,29 +49,25 @@ class Ekans(object):
         head.transform = tr.scale(1/self.N, 1/self.N, 1)
         head.childs += [gpu_head_quad]
 
-        # Creamos el cuerpo
-
-        body = sg.SceneGraphNode('body')
-        body.transform = tr.scale(1/self.N, 1/self.N, 1)
-        body.childs += [gpu_body_quad]
-
         # Armamos la serpiente
 
         ekans = sg.SceneGraphNode ('ekans')
+        self.transform_ekans = sg.SceneGraphNode('ekansTR')
+        self.transform_ekans.childs += [head]
 
-        transform_ekans = sg.SceneGraphNode('ekansTR')
-        transform_ekans.childs += [head]
 
         self.posicion_x = 1/self.N
         self.posicion_y = 1/self.N
-        self.model = transform_ekans
+        self.model = self.transform_ekans
 
     def direc(self):
         self.direc = 1
 
 
     def draw(self, pipeline):
-        self.model.transform = tr.translate(self.posicion_x, self.posicion_y, 0)
+        px = self.posicion_x
+        py = self.posicion_y
+        self.model.transform = tr.translate(px, py, 0)
         sg.drawSceneGraphNode(self.model, pipeline, "transform")
 
 
@@ -87,17 +107,40 @@ class Ekans(object):
 
     def eat(self, pos_x, pos_y):
         self.x = 0
-        apples = Apple()
         if(self.posicion_x >= pos_x - 0.02 and self.posicion_x <= pos_x + 0.02):
             if(self.posicion_y >= pos_y - 0.02 and self.posicion_y <= pos_y + 0.02):
-                print("comer")
                 self.x = 1
-        else:
-            print (self.posicion_x, self.posicion_y, 's')
-            print (apples.pos_x, apples.pos_y, 'm')
-
-        print (self.x, 'xx')
+                self.taleList.append((Tale()))
+                self.k += 1
+        self.k = 0
         return self.x
+
+    def draw_tale(self, pipeline):
+        tale = Tale()
+        x = self.posicion_x
+        y = self.posicion_y
+        for j in self.taleList:
+            if self.direc == 1:
+                j.draw(pipeline, x, y - 0.05)
+                y -= 0.05
+                tale.tale_direc = 1
+
+            elif self.direc == -1:
+                j.draw(pipeline, x, y + 0.05)
+                y +=0.05
+                tale.tale_direc = -1
+
+            elif self.direc == 2:
+                j.draw(pipeline, x - 0.05, y)
+                x -=0.05
+                tale.tale_direc = 2
+
+            else:
+                j.draw(pipeline, x + 0.05, y)
+                x += 0.05
+                tale.tale_direc = 0
+
+
 
 import random
 
@@ -124,4 +167,8 @@ class Apple(object):
     def draw(self, pipeline, pos_x, pos_y):
         self.model.transform = tr.translate(pos_x, pos_y, 0)
         sg.drawSceneGraphNode(self.model, pipeline, "transform")
+
+
+
+
 
