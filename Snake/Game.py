@@ -46,7 +46,6 @@ if __name__ == "__main__":
     defeat = Map.Defeat()
     apple = Formas.Apple()
     limit = Map.Limit()
-    grasp = Map.Grasp()
 
     controlador.set_model(ekans)
     t0 = 0
