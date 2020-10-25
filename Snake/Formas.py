@@ -5,12 +5,15 @@ from Snake import  easy_shaders as es
 from Snake import Map
 import numpy as np
 from typing import List
+from OpenGL.GL import *
 
 class Tale(object):
     N = Map.Map.N
 
-    def __init__(self):
-        gpu_tale_quad = es.toGPUShape(bs.createColorQuad(1, 1, 0))  # celeste
+    def __init__(self, p_x, p_y):
+        self.o = 1
+        gpu_tale_quad = es.toGPUShape(
+            bs.createTextureQuad('cuerpo.new.png'), GL_REPEAT, GL_NEAREST)  # celeste
 
         # Creamos la cola
         tale = sg.SceneGraphNode('tale')
@@ -20,12 +23,12 @@ class Tale(object):
         tale_tr = sg.SceneGraphNode("taleTR")
         tale_tr.childs += [tale]
 
-        self.p_x = 0
-        self.p_y = 0
+        self.p_x = p_x
+        self.p_y = p_y
         self.model = tale_tr
 
-    def draw(self, pipeline,x ,y):
-        self.model.transform = tr.translate(x, y, 0)
+    def draw(self, pipeline):
+        self.model.transform = tr.translate(self.p_x, self.p_y, 0)
         sg.drawSceneGraphNode(self.model, pipeline, "transform")
 
     def tale_direc(self):
@@ -36,12 +39,15 @@ class Ekans(object):
     taleList: List['Tale']
 
     def __init__(self):
-        self.x = 0
+        self.h = 1
         self.k = 1
+        self.x = 0
         self.taleList = []
         # Figuras basicas
 
-        gpu_head_quad = es.toGPUShape(bs.createColorQuad(1, 0, 1))  # morado
+        gpu_head_quad = es.toGPUShape(
+            bs.createTextureQuad('caeza.png'), GL_REPEAT, GL_NEAREST)  # morado
+
 
         # Creamos la cabeza
 
@@ -85,6 +91,10 @@ class Ekans(object):
 
             self.posicion_x -= 1/self.N
 
+        elif self.h == 0:
+            self.posicion_x += 0
+            self.posicion_y += 0
+
         else:
             self.posicion_x += 1/self.N
 
@@ -103,44 +113,46 @@ class Ekans(object):
     def loose(self):
         if(self.posicion_x <= -1 or self.posicion_x >= 1 or
            self.posicion_y <= -1 or self.posicion_y >= 1):
-            print("perdiste")
+            self. h = 0
+
+        for h in self.taleList:
+            if (self.posicion_x >= h.p_x - self.N / 1000 and self.posicion_x <= h.p_x + self.N / 1000):
+                if (self.posicion_y >= h.p_y - self.N / 1000 and self.posicion_y <= h.p_y + self.N / 1000):
+                    print("perdiste")
+                    self.h = 0
+
 
     def eat(self, pos_x, pos_y):
         self.x = 0
-        if(self.posicion_x >= pos_x - 0.02 and self.posicion_x <= pos_x + 0.02):
-            if(self.posicion_y >= pos_y - 0.02 and self.posicion_y <= pos_y + 0.02):
+        if(self.posicion_x >= pos_x - self.N/1000 and self.posicion_x <= pos_x + self.N/1000):
+            if(self.posicion_y >= pos_y - self.N/1000 and self.posicion_y <= pos_y + self.N/1000):
                 self.x = 1
-                self.taleList.append((Tale()))
-                self.k += 1
+                if len(self.taleList) == 0:
+                    self.taleList.append((Tale(self.posicion_x, self.posicion_y)))
+                    self.k += 1
+
+                else:
+                    q = self.taleList[len(self.taleList) - 1]
+                    self.taleList.append((Tale(q.p_x, q.p_y)))
         self.k = 0
         return self.x
 
-    def draw_tale(self, pipeline):
-        tale = Tale()
+
+    def replace(self, ti):
         x = self.posicion_x
         y = self.posicion_y
+        self.update(ti)
+        for j in range(0, len(self.taleList)):
+            save_x = self.taleList[j].p_x
+            save_y = self.taleList[j].p_y
+            self.taleList[j].p_x = x
+            self.taleList[j].p_y = y
+            x = save_x
+            y = save_y
+
+    def draw_tale(self, pipeline):
         for j in self.taleList:
-            if self.direc == 1:
-                j.draw(pipeline, x, y - 0.05)
-                y -= 0.05
-                tale.tale_direc = 1
-
-            elif self.direc == -1:
-                j.draw(pipeline, x, y + 0.05)
-                y +=0.05
-                tale.tale_direc = -1
-
-            elif self.direc == 2:
-                j.draw(pipeline, x - 0.05, y)
-                x -=0.05
-                tale.tale_direc = 2
-
-            else:
-                j.draw(pipeline, x + 0.05, y)
-                x += 0.05
-                tale.tale_direc = 0
-
-
+            j.draw(pipeline)
 
 import random
 

@@ -2,6 +2,7 @@ from Snake import transformations as tr
 from Snake import  basic_shapes as bs
 from Snake import  scene_graph as sg
 from Snake import  easy_shaders as es
+from OpenGL.GL import *
 import numpy as np
 
 class Map:
@@ -36,32 +37,25 @@ class Limit:
                 self.model.transform = tr.translate(px, py, 0)
                 sg.drawSceneGraphNode(self.model, pipeline, "transform")
 
-class Grasp:
+
+class Defeat:
     N = Map.N
-
     def __init__(self):
-        gpu_grasp_quad = es.toGPUShape(bs.createColorQuad(0, 1, 0))  # verde
+        gpu_defeat_quad = es.toGPUShape(
+            bs.createTextureQuad('gameover.png'), GL_REPEAT, GL_NEAREST)
 
-        # Creamos el pasto
+        # Creamos el cartel
 
-        grasp = sg.SceneGraphNode('grasp')
-        grasp.transform = tr.scale(1 / self.N, 1 / self.N, 1)
-        grasp.childs += [gpu_grasp_quad]
+        defeat = sg.SceneGraphNode('grasp')
+        defeat.transform = tr.scale(10/self.N, 10/self.N, 1)
+        defeat.childs += [gpu_defeat_quad]
 
-        grasp_tr = sg.SceneGraphNode("graspTR")
-        grasp_tr.childs += [grasp]
+        defeat_tr = sg.SceneGraphNode("limitTR")
+        defeat_tr.childs += [defeat]
 
-        self.model = grasp_tr
+        self.model = defeat_tr
 
-        # Creamos el pasto
 
     def draw(self, pipeline):
-        for px in np.arange(-1 + 1 / self.N, 1 - 1 / self.N, 1 / self.N):
-            for py in (-1, 1):
-                self.model.transform = tr.translate(px, py, 0)
-                sg.drawSceneGraphNode(self.model, pipeline, "transform")
-
-        for py in np.arange(-1 + 1 / self.N, 1 - 1 / self.N, 1 / self.N):
-            for px in (-1, 1):
-                self.model.transform = tr.translate(px, py, 0)
-                sg.drawSceneGraphNode(self.model, pipeline, "transform")
+        self.model.transform = tr.translate(0, 0, 0)
+        sg.drawSceneGraphNode(self.model, pipeline, "transform")

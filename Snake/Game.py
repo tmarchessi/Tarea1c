@@ -33,8 +33,8 @@ if __name__ == "__main__":
     # Assembling the shader program(pipeline) with both shaders
     pipeline = es.SimpleTransformShaderProgram()
 
-    # Telling Opengl to use our shader program
-    glUseProgram(pipeline.shaderProgram)
+    # Assembling the shader program (pipeline2) with both shaders
+    pipeline2 = es.SimpleTextureTransformShaderProgram()
 
     # setting up the clear screen color
     glClearColor(0.85, 0.85, 0.85, 1.0)
@@ -43,9 +43,10 @@ if __name__ == "__main__":
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
 
     ekans = Formas.Ekans()
-    tale = Formas.Tale()
+    defeat = Map.Defeat()
     apple = Formas.Apple()
     limit = Map.Limit()
+    grasp = Map.Grasp()
 
     controlador.set_model(ekans)
     t0 = 0
@@ -53,7 +54,13 @@ if __name__ == "__main__":
     pos_x = apple.pos_x
     pos_y = apple.pos_y
 
+    glEnable(GL_BLEND)
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+
     while not glfw.window_should_close(window):
+        # Telling Opengl to use our shader program
+        glUseProgram(pipeline.shaderProgram)
+
         # Calculamos dt
         ti = glfw.get_time()
         N = Map.Map.N
@@ -66,38 +73,33 @@ if __name__ == "__main__":
         # Clearing  the screen in both, color and depth
         glClear(GL_COLOR_BUFFER_BIT)
         if ti > f:
-            ekans.update(ti)
             k = 1
+            ekans.loose()
+            if k == 1:
+                ekans.eat(pos_x, pos_y)
+            if x == 1:
+                pos_x = random.choice(np.arange(-1 + 1/N, 1 - 1/N, 1/N))
+                pos_y = random.choice(np.arange(-1 + 1/N, 1 - 1/N, 1/N))
+                for v in ekans.taleList:
+                    if (pos_x == ekans.posicion_x or pos_x == v.p_x):
+                        if(pos_y == ekans.posicion_y or pos_y == v.p_y):
+                            pos_x = random.choice(np.arange(-1 + 1 / N, 1 - 1 / N, 1 / N))
+                            pos_y = random.choice(np.arange(-1 + 1 / N, 1 - 1 / N, 1 / N))
+            if len(ekans.taleList) >= 0:
+                ekans.replace(ti)
             f += 0.1
-        ekans.loose()
-        if k == 1:
-            ekans.eat(pos_x, pos_y)
-        if x == 1:
-            pos_x = random.choice(np.arange(-1 + 1/N, 1 - 1/N, 1/N))
-            pos_y = random.choice(np.arange(-1 + 1/N, 1 - 1/N, 1/N))
-            if (pos_x == ekans.posicion_x or pos_x == tale.p_x):
-                if(pos_y == ekans.posicion_y or pos_y == tale.p_y):
-                    pos_x = random.choice(np.arange(-1 + 1 / N, 1 - 1 / N, 1 / N))
-                    pos_y = random.choice(np.arange(-1 + 1 / N, 1 - 1 / N, 1 / N))
-        if ekans.taleList.__len__() == 1:
-            ekans.draw_tale(pipeline)
-
-        else:
-            for j in ekans.taleList:
-                if ekans.direc == tale.tale_direc:
-                    ekans.draw_tale(pipeline)
-
-                else:
-                    p = ekans.direc
-                    ekans.direc = tale.tale_direc
-                    ekans.draw_tale(pipeline)
-                    ekans.direc = p
-                    tale.tale_direc = p
 
         # Dibujamos
         apple.draw(pipeline, pos_x, pos_y)
-        ekans.draw(pipeline)
         limit.draw(pipeline)
+        print(ekans.h)
+
+        glUseProgram(pipeline2.shaderProgram)
+        ekans.draw_tale(pipeline2)
+        ekans.draw(pipeline2)
+        if ekans.h == 0:
+            defeat.draw(pipeline2)
+
 
         # Once the render is done, buffers are swapped showing only the complete one
         glfw.swap_buffers(window)
